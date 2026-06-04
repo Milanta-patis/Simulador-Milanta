@@ -226,36 +226,31 @@ df = carregar_dades()
 
 # ── CÀLCUL DE PREUS BASE PER TAULA ───────────────────────────────────────────
 def preu_base(df, tipologia, complexitat):
-    """Preu mig, mínim i màxim per tipologia+complexitat.
-    Fallback progressiu si no hi ha dades suficients."""
-
     filtre = df[(df['tipologia'] == tipologia) & (df['complexitat'] == complexitat)]
 
-    if len(filtre) >= 2:
+    if len(filtre) >= 1:
         mostres = len(filtre)
         mig  = filtre['preu/m²'].mean()
-        baix = filtre['preu/m²'].min()
-        alt  = filtre['preu/m²'].max()
-        origen = f"{mostres} projectes amb tipologia '{tipologia}' i complexitat '{complexitat}'"
+        baix = mig * 0.85
+        alt  = mig * 1.15
+        origen = f"{mostres} projecte{'s' if mostres != 1 else ''} amb tipologia '{tipologia}' i complexitat '{complexitat}'"
         return mig, baix, alt, mostres, origen
 
     # Fallback 1: només tipologia
     filtre2 = df[df['tipologia'] == tipologia]
-    if len(filtre2) >= 2:
+    if len(filtre2) >= 1:
         mostres = len(filtre2)
         mig  = filtre2['preu/m²'].mean()
-        std  = filtre2['preu/m²'].std()
-        baix = max(mig - std, filtre2['preu/m²'].min())
-        alt  = min(mig + std, filtre2['preu/m²'].max())
-        origen = f"{mostres} projectes amb tipologia '{tipologia}' (complexitat sense dades suficients)"
+        baix = mig * 0.85
+        alt  = mig * 1.15
+        origen = f"{mostres} projecte{'s' if mostres != 1 else ''} amb tipologia '{tipologia}' (complexitat sense dades suficients)"
         return mig, baix, alt, mostres, origen
 
     # Fallback 2: global
     mostres = len(df)
     mig  = df['preu/m²'].mean()
-    std  = df['preu/m²'].std()
-    baix = mig - std
-    alt  = mig + std
+    baix = mig * 0.85
+    alt  = mig * 1.15
     origen = f"Mitjana global ({mostres} projectes) — combinació sense dades"
     return mig, baix, alt, mostres, origen
 
