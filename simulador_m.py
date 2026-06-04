@@ -226,33 +226,31 @@ df = carregar_dades()
 
 # ── CÀLCUL DE PREUS BASE PER TAULA ───────────────────────────────────────────
 def preu_base(df, tipologia, complexitat):
-    filtre = df[(df['tipologia'] == tipologia) & (df['complexitat'] == complexitat)]
+    
+    # Factor de complexitat
+    factor_comp = {'baixa': 0.85, 'mitja': 1.00, 'alta': 1.15}[complexitat]
+
+    # Intentem agafar la mitjana de la tipologia (sense filtrar per complexitat)
+    filtre = df[df['tipologia'] == tipologia]
 
     if len(filtre) >= 1:
         mostres = len(filtre)
-        mig  = filtre['preu/m²'].mean()
+        mig_base = filtre['preu/m²'].mean()
+        mig  = mig_base * factor_comp
         baix = mig * 0.85
         alt  = mig * 1.15
-        origen = f"{mostres} projecte{'s' if mostres != 1 else ''} amb tipologia '{tipologia}' i complexitat '{complexitat}'"
+        origen = f"{mostres} projecte{'s' if mostres != 1 else ''} amb tipologia '{tipologia}'"
         return mig, baix, alt, mostres, origen
 
-    # Fallback 1: només tipologia
-    filtre2 = df[df['tipologia'] == tipologia]
-    if len(filtre2) >= 1:
-        mostres = len(filtre2)
-        mig  = filtre2['preu/m²'].mean()
-        baix = mig * 0.85
-        alt  = mig * 1.15
-        origen = f"{mostres} projecte{'s' if mostres != 1 else ''} amb tipologia '{tipologia}' (complexitat sense dades suficients)"
-        return mig, baix, alt, mostres, origen
-
-    # Fallback 2: global
+    # Fallback: global
     mostres = len(df)
-    mig  = df['preu/m²'].mean()
+    mig_base = df['preu/m²'].mean()
+    mig  = mig_base * factor_comp
     baix = mig * 0.85
     alt  = mig * 1.15
-    origen = f"Mitjana global ({mostres} projectes) — combinació sense dades"
+    origen = f"Mitjana global ({mostres} projectes) — tipologia sense dades"
     return mig, baix, alt, mostres, origen
+
 
 # ── FORMULARI ─────────────────────────────────────────────────────────────────
 st.markdown('<div class="sec-title">Dades del projecte</div>', unsafe_allow_html=True)
