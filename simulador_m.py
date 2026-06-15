@@ -23,7 +23,6 @@ st.markdown("""
         padding-top: 0 !important;
     }
 
-    /* Capçalera */
     .header {
         text-align: center;
         padding: 2.5rem 0 2rem 0;
@@ -45,7 +44,6 @@ st.markdown("""
         font-style: italic;
     }
 
-    /* Títols de secció */
     .sec-title {
         font-size: 0.68rem;
         font-weight: 600;
@@ -56,7 +54,6 @@ st.markdown("""
         margin-top: 2rem;
     }
 
-    /* Inputs */
     div[data-baseweb="select"] > div {
         background-color: #FFFFFF !important;
         border: 1px solid #D6CFC4 !important;
@@ -79,7 +76,6 @@ st.markdown("""
         font-weight: 400 !important;
     }
 
-    /* Botó */
     .stButton > button {
         width: 100%;
         background-color: #2D5A1B !important;
@@ -100,7 +96,6 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(45,90,27,0.2) !important;
     }
 
-    /* Cards de resultat */
     .cards-wrap {
         display: grid;
         grid-template-columns: 1fr 1.15fr 1fr;
@@ -143,7 +138,6 @@ st.markdown("""
         color: #9A9288;
     }
 
-    /* Badge mostres */
     .badge {
         display: inline-block;
         background: #EAF2E5;
@@ -156,7 +150,6 @@ st.markdown("""
         text-align: center;
     }
 
-    /* Avís */
     .warning {
         background: #FDF6E3;
         border: 1px solid #E8D5A0;
@@ -167,7 +160,6 @@ st.markdown("""
         margin-top: 1rem;
     }
 
-    /* Detall desplegable */
     .stExpander {
         background: #FFFFFF !important;
         border: 1px solid #D6CFC4 !important;
@@ -192,7 +184,6 @@ st.markdown("""
         color: #2D5A1B;
     }
 
-    /* Footer */
     .footer {
         text-align: center;
         font-size: 0.75rem;
@@ -224,33 +215,43 @@ def carregar_dades():
 
 df = carregar_dades()
 
-# ── CÀLCUL DE PREUS BASE PER TAULA ───────────────────────────────────────────
-def preu_base(df, tipologia, complexitat):
-    
-    # Factor de complexitat
-    factor_comp = {'baixa': 0.85, 'mitja': 1.00, 'alta': 1.15}[complexitat]
+# ── MOTOR DE CÀLCUL NOU ──────────────────────────────────────────────────────
+BASE_TIPOLOGIA = {
+    "combinat": 202.73,
+    "espai trobada": 276.44,
+    "moviment": 289.30,
+    "sorral": 233.05
+}
 
-    # Intentem agafar la mitjana de la tipologia (sense filtrar per complexitat)
-    filtre = df[df['tipologia'] == tipologia]
+IMPACTE_REPICAT = {
+    "combinat": 0.0983,
+    "espai trobada": 0.1010,
+    "moviment": 0.0810,
+    "sorral": 0.0643
+}
 
-    if len(filtre) >= 1:
-        mostres = len(filtre)
-        mig_base = filtre['preu/m²'].mean()
-        mig  = mig_base * factor_comp
-        baix = mig * 0.85
-        alt  = mig * 1.15
-        origen = f"{mostres} projecte{'s' if mostres != 1 else ''} amb tipologia '{tipologia}'"
-        return mig, baix, alt, mostres, origen
+FACTOR_COMPLEXITAT = {
+    "baixa": 0.95,
+    "mitja": 1.00,
+    "alta": 1.15
+}
 
-    # Fallback: global
-    mostres = len(df)
-    mig_base = df['preu/m²'].mean()
-    mig  = mig_base * factor_comp
-    baix = mig * 0.85
-    alt  = mig * 1.15
-    origen = f"Mitjana global ({mostres} projectes) — tipologia sense dades"
-    return mig, baix, alt, mostres, origen
+def calcular_preu(tipologia, m2, repicat, maquina, complexitat, accessibilitat):
+    base = BASE_TIPOLOGIA[tipologia]
+    factor_repicat = 1 + IMPACTE_REPICAT[tipologia] if repicat != "no" else 1
+    factor_maquina = 1.00 if maquina == "si" else 0.95
+    factor_complexitat = FACTOR_COMPLEXITAT[complexitat]
+    factor_acc = {"bona": 1.00, "limitada": 1.15, "molt limitada": 1.30}[accessibilitat]
 
+    preu_m2 = base * factor_repicat * factor_maquina * factor_complexitat * factor_acc
+    total = preu_m2 * m2
+
+    return (
+        round(preu_m2, 2),
+        round(total * 0.85, 2),
+        round(total, 2),
+        round(total * 1.15, 2)
+    )
 
 # ── FORMULARI ─────────────────────────────────────────────────────────────────
 st.markdown('<div class="sec-title">Dades del projecte</div>', unsafe_allow_html=True)
@@ -269,38 +270,15 @@ calcular = st.button("Calcular pressupost orientatiu")
 
 # ── CÀLCUL ────────────────────────────────────────────────────────────────────
 if calcular:
+    preu_m2, total_baix, total_mig, total_alt = calcular_preu(
+        tipologia=tipologia,
+        m2=m2,
+        repicat=repicat,
+        maquina=maquina,
+        complexitat=complexitat,
+        accessibilitat=accessibilitat
+    )
 
-    # Preu base de la taula
-    preu_mig, preu_min, preu_max, mostres, origen = preu_base(df, tipologia, complexitat)
-
-    # Factor accessibilitat
-    factor_acc = 1.0
-    if accessibilitat == "limitada":
-        factor_acc = 1.15
-    elif accessibilitat == "molt limitada":
-        factor_acc = 1.30
-
-    # Cost base (preu/m² * m² * accessibilitat)
-    cost_mig  = round(preu_mig * m2 * factor_acc)
-    cost_baix = round(preu_min * m2 * factor_acc)
-    cost_alt  = round(preu_max * m2 * factor_acc)
-
-    # Cost màquina (fix per trams)
-    if maquina == "si":
-        cost_maquina = 1000 if m2 < 50 else 1600 if m2 <= 100 else 2200
-    else:
-        cost_maquina = 0
-
-    # Cost repicat
-    area_repicat = m2 * 0.40 if repicat == "parcial" else m2 if repicat == "total" else 0
-    cost_repicat = round((area_repicat * 0.30 * 1.4 / 0.75) * 55) if area_repicat > 0 else 0
-
-    # Totals
-    total_mig  = cost_mig  + cost_maquina + cost_repicat
-    total_baix = cost_baix + cost_maquina + cost_repicat
-    total_alt  = cost_alt  + cost_maquina + cost_repicat
-
-    # ── RESULTATS ─────────────────────────────────────────────────────────────
     st.markdown('<div class="sec-title">Pressupost orientatiu</div>', unsafe_allow_html=True)
 
     st.markdown(f"""
@@ -313,7 +291,7 @@ if calcular:
         <div class="card-mid">
             <div class="card-label">Estimació mitjana</div>
             <div class="card-value">{total_mig:,.0f} €</div>
-            <div class="card-sub">{round(preu_mig * factor_acc)} €/m² · {m2} m²</div>
+            <div class="card-sub">{preu_m2} €/m² · {m2} m²</div>
         </div>
         <div class="card">
             <div class="card-label">Estimació alta</div>
@@ -322,11 +300,10 @@ if calcular:
         </div>
     </div>
     <div style="text-align:center">
-        <span class="badge">📊 Basat en {mostres} projecte{"s" if mostres != 1 else ""} · {origen}</span>
+        <span class="badge">📊 Basat en dades històriques de projectes reals</span>
     </div>
     """, unsafe_allow_html=True)
 
-    # Avís si superfície fora de rang
     m2_min = int(df['m²'].min())
     m2_max = int(df['m²'].max())
     if m2 < m2_min or m2 > m2_max:
@@ -337,22 +314,16 @@ if calcular:
         </div>
         """, unsafe_allow_html=True)
 
-    # Detall desplegable
     with st.expander("Veure detall del càlcul"):
         st.markdown(f"""
         <div class="detail-row">
-            <span>Cost base d'obra ({round(preu_mig * factor_acc)} €/m² × {m2} m²)</span>
-            <span>{cost_mig:,.0f} €</span>
+            <span>Preu unitari final</span>
+            <span>{preu_m2} €/m²</span>
         </div>
         <div class="detail-row">
-            <span>Cost màquina</span>
-            <span>{cost_maquina:,.0f} €</span>
+            <span>Superfície</span>
+            <span>{m2} m²</span>
         </div>
-        <div class="detail-row">
-            <span>Cost repicat i retirada de runes</span>
-            <span>{cost_repicat:,.0f} €</span>
-        </div>
-        {"<div class='detail-row'><span>Increment accessibilitat</span><span>+" + str(round((factor_acc-1)*100)) + "%</span></div>" if factor_acc > 1 else ""}
         <div class="detail-row detail-total">
             <span>Total estimació mitjana</span>
             <span>{total_mig:,.0f} €</span>
