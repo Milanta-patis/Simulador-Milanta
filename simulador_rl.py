@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import cross_val_score, LeaveOneOut
 
 # ── CONFIGURACIÓ ─────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -13,126 +12,152 @@ st.set_page_config(
 # ── CSS ──────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'DM Sans', sans-serif;
-        background-color: #F7F4EF;
-        color: #3A3228;
+        font-family: 'DM Sans', sans-serif !important;
+        background-color: #F7F4EF !important;
+        color: #3A3228 !important;
     }
-    .main { background-color: #F7F4EF; }
-    
-    /* Capçalera */
+    .main, .block-container {
+        background-color: #F7F4EF !important;
+        padding-top: 0 !important;
+    }
     .header {
         text-align: center;
-        padding: 2.5rem 0 1.5rem 0;
-        border-bottom: 1.5px solid #D6CFC4;
+        padding: 2.5rem 0 2rem 0;
+        border-bottom: 1px solid #D6CFC4;
         margin-bottom: 2rem;
     }
     .header h1 {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 600;
         color: #2D5A1B;
         letter-spacing: -0.3px;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.4rem;
     }
     .header p {
-        font-size: 0.9rem;
-        color: #7A7268;
+        font-size: 0.85rem;
+        color: #9A9288;
         font-weight: 300;
         margin: 0;
+        font-style: italic;
     }
-
-    /* Títols de secció */
     .sec-title {
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         font-weight: 600;
-        letter-spacing: 1.2px;
+        letter-spacing: 1.4px;
         text-transform: uppercase;
-        color: #7A7268;
-        margin-bottom: 0.8rem;
-        margin-top: 1.8rem;
+        color: #9A9288;
+        margin-bottom: 1rem;
+        margin-top: 2rem;
     }
-
-    /* Inputs */
-    .stSelectbox label, .stNumberInput label {
+    div[data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+        border: 1px solid #D6CFC4 !important;
+        border-radius: 10px !important;
+        color: #3A3228 !important;
+    }
+    div[data-baseweb="select"] > div:focus-within {
+        border-color: #4A7C2F !important;
+        box-shadow: 0 0 0 2px rgba(74,124,47,0.12) !important;
+    }
+    div[data-testid="stNumberInput"] input {
+        background-color: #FFFFFF !important;
+        border: 1px solid #D6CFC4 !important;
+        border-radius: 10px !important;
+        color: #3A3228 !important;
+    }
+    label {
         font-size: 0.85rem !important;
         color: #5A5248 !important;
         font-weight: 400 !important;
     }
-    .stSelectbox > div > div,
-    .stNumberInput > div > div > input {
-        background-color: #FFFFFF !important;
-        border: 1px solid #D6CFC4 !important;
-        border-radius: 8px !important;
-        color: #3A3228 !important;
-        font-size: 0.9rem !important;
-    }
-    .stSelectbox > div > div:focus-within,
-    .stNumberInput > div > div > input:focus {
-        border-color: #4A7C2F !important;
-        box-shadow: 0 0 0 2px rgba(74,124,47,0.15) !important;
-    }
-
-    /* Botó */
     .stButton > button {
         width: 100%;
         background-color: #2D5A1B !important;
-        color: white !important;
+        color: #FFFFFF !important;
         border: none !important;
-        border-radius: 10px !important;
-        padding: 0.75rem !important;
+        border-radius: 12px !important;
+        padding: 0.85rem 1rem !important;
         font-size: 0.95rem !important;
         font-weight: 500 !important;
         font-family: 'DM Sans', sans-serif !important;
-        letter-spacing: 0.2px;
         margin-top: 1.5rem;
-        transition: background-color 0.2s;
+        transition: all 0.2s ease;
     }
     .stButton > button:hover {
-        background-color: #4A7C2F !important;
+        background-color: #3D7A25 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(45,90,27,0.2) !important;
     }
-
-    /* Resultats */
-    .result-box {
-        background-color: #FFFFFF;
+    .cards-wrap {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr 1fr;
+        gap: 12px;
+        margin-top: 1.5rem;
+    }
+    .card {
+        background: #FFFFFF;
         border: 1px solid #D6CFC4;
-        border-radius: 14px;
-        padding: 1.8rem 1.5rem;
-        margin-top: 1.8rem;
+        border-radius: 16px;
+        padding: 1.5rem 1.2rem;
+        text-align: center;
     }
-    .result-label {
-        font-size: 0.7rem;
+    .card-mid {
+        background: #F0F5EC;
+        border: 1.5px solid #B8D4A8;
+        border-radius: 16px;
+        padding: 1.5rem 1.2rem;
+        text-align: center;
+    }
+    .card-label {
+        font-size: 0.65rem;
         font-weight: 600;
-        letter-spacing: 1px;
+        letter-spacing: 1.2px;
         text-transform: uppercase;
-        color: #7A7268;
-        margin-bottom: 0.3rem;
+        color: #9A9288;
+        margin-bottom: 0.6rem;
     }
-    .result-value {
-        font-size: 1.9rem;
+    .card-mid .card-label { color: #5A8A45; }
+    .card-value {
+        font-size: 1.7rem;
         font-weight: 600;
         color: #2D5A1B;
         line-height: 1.1;
+        margin-bottom: 0.3rem;
     }
-    .result-sub {
-        font-size: 0.8rem;
-        color: #7A7268;
-        margin-top: 0.2rem;
+    .card-mid .card-value { font-size: 2rem; }
+    .card-sub {
+        font-size: 0.75rem;
+        color: #9A9288;
     }
-    .result-mid {
-        background-color: #F0F5EC;
-        border: 1.5px solid #C5D9B8;
-        border-radius: 14px;
-        padding: 1.8rem 1.5rem;
-        margin-top: 1.8rem;
+    .badge {
+        display: inline-block;
+        background: #EAF2E5;
+        color: #4A7C2F;
+        border-radius: 20px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-top: 1.2rem;
         text-align: center;
     }
-    .result-mid .result-value {
-        font-size: 2.4rem;
+    .warning {
+        background: #FDF6E3;
+        border: 1px solid #E8D5A0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 0.82rem;
+        color: #7A6520;
+        margin-top: 1rem;
     }
-
-    /* Detall */
+    .stExpander {
+        background: #FFFFFF !important;
+        border: 1px solid #D6CFC4 !important;
+        border-radius: 12px !important;
+        margin-top: 1rem;
+    }
     .detail-row {
         display: flex;
         justify-content: space-between;
@@ -142,21 +167,19 @@ st.markdown("""
         color: #5A5248;
     }
     .detail-row:last-child { border-bottom: none; }
-
-    /* Divisor */
-    hr { border-color: #D6CFC4 !important; }
-
-    /* Footer */
+    .detail-total {
+        font-weight: 600;
+        color: #2D5A1B;
+    }
     .footer {
         text-align: center;
         font-size: 0.75rem;
-        color: #ADA89F;
+        color: #B0A89F;
         margin-top: 3rem;
         padding-top: 1.5rem;
         border-top: 1px solid #D6CFC4;
+        font-style: italic;
     }
-
-    /* Amagant elements streamlit */
     #MainMenu, footer, header { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
@@ -175,134 +198,130 @@ def carregar_model():
     df = pd.read_excel("DADES GENERALS.xlsx")
     df.columns = df.columns.str.strip()
 
-    label_mappings = {
-        'complexitat':    {'baixa': 0, 'mitja': 1, 'alta': 2},
-        'accessibilitat': {'bona': 0, 'limitada': 1, 'molt limitada': 2},
-        'repicat':        {'no': 0, 'parcial': 1, 'total': 2},
-        'maquina':        {'no': 0, 'si': 1},
-    }
-    for col, mapping in label_mappings.items():
-        df[col + '_enc'] = df[col].map(mapping)
+    df_model = df[[
+        "complexitat", "accessibilitat", "maquina",
+        "repicat", "tipologia", "p.t./m²"
+    ]].copy()
 
-    tipologia_dummies = pd.get_dummies(df['tipologia'], prefix='tip')
-    df = pd.concat([df, tipologia_dummies], axis=1)
+    df_ml = pd.get_dummies(
+        df_model,
+        columns=["complexitat", "accessibilitat", "maquina", "repicat", "tipologia"],
+        drop_first=True
+    )
 
-    features = ['m²', 'complexitat_enc', 'accessibilitat_enc',
-    'tip_combinat', 'tip_espai trobada', 'tip_moviment', 'tip_sorral']
+    X = df_ml.drop(columns=["p.t./m²"])
+    y = df_ml["p.t./m²"]
 
-    X = df[features]
-    y = df['preu/m²']
+    model = LinearRegression().fit(X, y)
 
-    model = LinearRegression()
-    model.fit(X, y)
+    m2_min = int(df['m²'].min())
+    m2_max = int(df['m²'].max())
 
-    loo = LeaveOneOut()
-    mae = -cross_val_score(model, X, y, cv=loo,
-                           scoring='neg_mean_absolute_error').mean()
+    return model, X.columns.tolist(), m2_min, m2_max
 
-    return model, features, mae
-
-model, features, mae = carregar_model()
+model, feature_cols, m2_min, m2_max = carregar_model()
 
 # ── FORMULARI ─────────────────────────────────────────────────────────────────
 st.markdown('<div class="sec-title">Dades del projecte</div>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 with col1:
-    m2           = st.number_input("Superfície (m²)", min_value=10, max_value=2000, value=150, step=10)
-    complexitat  = st.selectbox("Complexitat", ["baixa", "mitja", "alta"])
+    m2             = st.number_input("Superfície (m²)", min_value=10, max_value=2000, value=150, step=10)
+    complexitat    = st.selectbox("Complexitat", ["baixa", "mitja", "alta"])
     accessibilitat = st.selectbox("Accessibilitat", ["bona", "limitada", "molt limitada"])
 with col2:
-    tipologia    = st.selectbox("Tipologia", ["combinat", "espai trobada", "moviment", "sorral"])
-    maquina      = st.selectbox("Màquina necessària", ["no", "si"])
-    repicat      = st.selectbox("Repicat", ["no", "parcial", "total"])
+    tipologia = st.selectbox("Tipologia", ["combinat", "espai trobada", "moviment", "sorral"])
+    maquina   = st.selectbox("Màquina necessària", ["no", "si"])
+    repicat   = st.selectbox("Repicat", ["no", "parcial", "total"])
 
 calcular = st.button("Calcular pressupost orientatiu")
 
 # ── CÀLCUL ────────────────────────────────────────────────────────────────────
 if calcular:
-    comp_enc = {'baixa': 0, 'mitja': 1, 'alta': 2}[complexitat]
-    acc_enc  = {'bona': 0, 'limitada': 1, 'molt limitada': 2}[accessibilitat]
-    maq_enc  = {'no': 0, 'si': 1}[maquina]
-    rep_enc  = {'no': 0, 'parcial': 1, 'total': 2}[repicat]
 
-    tip_combinat      = 1 if tipologia == 'combinat' else 0
-    tip_espai_trobada = 1 if tipologia == 'espai trobada' else 0
-    tip_moviment      = 1 if tipologia == 'moviment' else 0
-    tip_sorral        = 1 if tipologia == 'sorral' else 0
+    # Crear fila de predicció
+    row = pd.DataFrame([[0.0] * len(feature_cols)], columns=feature_cols)
 
-    X_nou = pd.DataFrame([[m2, comp_enc, acc_enc,
-                        tip_combinat, tip_espai_trobada,
-                        tip_moviment, tip_sorral]],
-                      columns=features)
+    for col in feature_cols:
+        if col == f"complexitat_{complexitat}":    row[col] = 1
+        if col == f"accessibilitat_{accessibilitat}": row[col] = 1
+        if col == f"maquina_{maquina}":            row[col] = 1
+        if col == f"repicat_{repicat}":            row[col] = 1
+        if col == f"tipologia_{tipologia}":        row[col] = 1
 
-    preu_m2 = model.predict(X_nou)[0]
+    preu_m2      = model.predict(row)[0]
+    preu_m2_baix = preu_m2 * 0.85
+    preu_m2_alt  = preu_m2 * 1.15
 
-    # Costos addicionals
-    if maquina == 'si':
-        cost_maquina = 1000 if m2 < 50 else 1600 if m2 <= 100 else 2200
-    else:
-        cost_maquina = 0
+    total      = round(preu_m2 * m2)
+    total_baix = round(preu_m2_baix * m2)
+    total_alt  = round(preu_m2_alt * m2)
 
-    area_repicat = m2 * 0.40 if repicat == 'parcial' else m2 if repicat == 'total' else 0
-    cost_repicat = round((area_repicat * 0.30 * 1.4 / 0.75) * 55) if area_repicat > 0 else 0
+    # ── RESULTATS ─────────────────────────────────────────────────────────────
+    st.markdown('<div class="sec-title">Pressupost orientatiu</div>', unsafe_allow_html=True)
 
-    cost_base  = round(preu_m2 * m2)
-    total      = cost_base + cost_maquina + cost_repicat
-    total_baix = round((preu_m2 - mae) * m2) + cost_maquina + cost_repicat
-    total_alt  = round((preu_m2 + mae) * m2) + cost_maquina + cost_repicat
-
-    # ── RESULTATS ────────────────────────────────────────────────────────────
-    st.markdown('<div class="sec-title" style="margin-top:2rem">Pressupost orientatiu</div>',
-                unsafe_allow_html=True)
-
-    c1, c2, c3 = st.columns([1, 1.2, 1])
-
-    with c1:
-        st.markdown(f"""
-        <div class="result-box">
-            <div class="result-label">Estimació baixa</div>
-            <div class="result-value">{total_baix:,.0f} €</div>
-            <div class="result-sub">{(total_baix/m2):.0f} €/m²</div>
-        </div>""", unsafe_allow_html=True)
-
-    with c2:
-        st.markdown(f"""
-        <div class="result-mid">
-            <div class="result-label">Estimació mitjana</div>
-            <div class="result-value">{total:,.0f} €</div>
-            <div class="result-sub">{preu_m2:.0f} €/m² · {m2} m²</div>
-        </div>""", unsafe_allow_html=True)
-
-    with c3:
-        st.markdown(f"""
-        <div class="result-box">
-            <div class="result-label">Estimació alta</div>
-            <div class="result-value">{total_alt:,.0f} €</div>
-            <div class="result-sub">{(total_alt/m2):.0f} €/m²</div>
-        </div>""", unsafe_allow_html=True)
-
-    # Detall
-    st.markdown('<div class="sec-title" style="margin-top:2rem">Detall del càlcul</div>',
-                unsafe_allow_html=True)
     st.markdown(f"""
-    <div class="result-box">
-        <div class="detail-row"><span>Cost base d'obra</span><span>{cost_base:,.0f} €</span></div>
-        <div class="detail-row"><span>Cost màquina</span><span>{cost_maquina:,.0f} €</span></div>
-        <div class="detail-row"><span>Cost repicat i retirada</span><span>{cost_repicat:,.0f} €</span></div>
-        <div class="detail-row" style="font-weight:500;color:#2D5A1B">
-            <span>Total estimació mitjana</span><span>{total:,.0f} €</span>
+    <div class="cards-wrap">
+        <div class="card">
+            <div class="card-label">Estimació baixa</div>
+            <div class="card-value">{total_baix:,.0f} €</div>
+            <div class="card-sub">{round(preu_m2_baix)} €/m²</div>
         </div>
-        <div class="detail-row" style="border-bottom:none;font-size:0.8rem;color:#ADA89F">
-            <span>Marge del model (±MAE)</span><span>±{mae:.0f} €/m²</span>
+        <div class="card-mid">
+            <div class="card-label">Estimació mitjana</div>
+            <div class="card-value">{total:,.0f} €</div>
+            <div class="card-sub">{round(preu_m2)} €/m² · {m2} m²</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Estimació alta</div>
+            <div class="card-value">{total_alt:,.0f} €</div>
+            <div class="card-sub">{round(preu_m2_alt)} €/m²</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
+    # Avís superfície fora de rang
+    if m2 < m2_min or m2 > m2_max:
+        st.markdown(f"""
+        <div class="warning">
+            ⚠️ La superfície introduïda ({m2} m²) està fora del rang habitual dels projectes
+            de la base de dades ({m2_min}–{m2_max} m²). L'estimació pot ser menys precisa.
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Detall desplegable
+    with st.expander("Veure detall del càlcul"):
+        st.markdown(f"""
+        <div class="detail-row">
+            <span>Superfície</span><span>{m2} m²</span>
+        </div>
+        <div class="detail-row">
+            <span>Preu/m² estimat</span><span>{round(preu_m2)} €/m²</span>
+        </div>
+        <div class="detail-row">
+            <span>Tipologia</span><span>{tipologia}</span>
+        </div>
+        <div class="detail-row">
+            <span>Complexitat</span><span>{complexitat}</span>
+        </div>
+        <div class="detail-row">
+            <span>Accessibilitat</span><span>{accessibilitat}</span>
+        </div>
+        <div class="detail-row">
+            <span>Màquina</span><span>{maquina}</span>
+        </div>
+        <div class="detail-row">
+            <span>Repicat</span><span>{repicat}</span>
+        </div>
+        <div class="detail-row detail-total">
+            <span>Total estimació mitjana</span><span>{total:,.0f} €</span>
+        </div>
+        """, unsafe_allow_html=True)
+
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="footer">
-    Pressupost orientatiu basat en projectes reals · 
+    Pressupost orientatiu basat en projectes reals ·
     Com més projectes s'introdueixin a la base de dades, més fiable serà l'estimació
 </div>
 """, unsafe_allow_html=True)
