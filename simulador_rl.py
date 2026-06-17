@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from pathlib import Path
 
 # ── CONFIGURACIÓ ─────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -9,10 +8,6 @@ st.set_page_config(
     page_icon="🌿",
     layout="centered"
 )
-
-# ── CARREGA LOGO ──────────────────────────────────────────────────────────────
-import os
-logo_path = "assets/1.Milanta.jpg"
 
 # ── CSS ──────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -203,11 +198,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── CAPÇALERA ─────────────────────────────────────────────────────────────────
-if os.path.exists(logo_path):
-    st.image(logo_path, width=120)
-
 st.markdown("""
-<div class="header" style="padding-top: 0; margin-top: -2rem;">
+<div class="header">
     <h1>Simulador de Pressupost Orientatiu</h1>
     <p>Renaturalització de patis escolars · milanta.net</p>
 </div>
