@@ -241,31 +241,48 @@ if calcular:
 
     # Crear fila de predicció
     row = pd.DataFrame([[0.0] * len(feature_cols)], columns=feature_cols)
-
     for col in feature_cols:
-        if col == f"complexitat_{complexitat}":    row[col] = 1
+        if col == f"complexitat_{complexitat}":      row[col] = 1
         if col == f"accessibilitat_{accessibilitat}": row[col] = 1
-        if col == f"maquina_{maquina}":            row[col] = 1
-        if col == f"repicat_{repicat}":            row[col] = 1
-        if col == f"tipologia_{tipologia}":        row[col] = 1
+        if col == f"maquina_{maquina}":              row[col] = 1
+        if col == f"repicat_{repicat}":              row[col] = 1
+        if col == f"tipologia_{tipologia}":          row[col] = 1
 
-    preu_m2      = model.predict(row)[0]
-    preu_m2_baix = preu_m2 * 0.85
-    preu_m2_alt  = preu_m2 * 1.15
+    preu_m2 = model.predict(row)[0]
+    fallback_actiu = False
 
-    total      = round(preu_m2 * m2)
-    total_baix = round(preu_m2_baix * m2)
-    total_alt  = round(preu_m2_alt * m2)
+    if preu_m2 < 0:
+        # Fallback: mínim real de la tipologia+complexitat corresponent
+        fallback_actiu = True
+        preu_base_fallback = 125  # mínim real combinat+baixa
+        factor_acc = (1.03 if accessibilitat == "limitada"
+                      else 1.06 if accessibilitat == "molt limitada"
+                      else 1.0)
+        preu_m2 = preu_base_fallback * factor_acc
+        cost_repicat_fallback = (
+            round(m2 * 0.30 * 30) if repicat == "parcial"
+            else round(m2 * 30)   if repicat == "total"
+            else 0
+        )
+        total      = round(preu_m2 * m2) + cost_repicat_fallback
+        total_baix = round(total * 0.85)
+        total_alt  = round(total * 1.15)
+    else:
+        cost_repicat_fallback = 0
+        total      = round(preu_m2 * m2)
+        total_baix = round(preu_m2 * 0.85 * m2)
+        total_alt  = round(preu_m2 * 1.15 * m2)
 
     # ── RESULTATS ─────────────────────────────────────────────────────────────
-    st.markdown('<div class="sec-title">Pressupost orientatiu</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sec-title">Pressupost orientatiu</div>',
+                unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="cards-wrap">
         <div class="card">
             <div class="card-label">Estimació baixa</div>
             <div class="card-value">{total_baix:,.0f} €</div>
-            <div class="card-sub">{round(preu_m2_baix)} €/m²</div>
+            <div class="card-sub">{round(total_baix/m2)} €/m²</div>
         </div>
         <div class="card-mid">
             <div class="card-label">Estimació mitjana</div>
@@ -275,17 +292,26 @@ if calcular:
         <div class="card">
             <div class="card-label">Estimació alta</div>
             <div class="card-value">{total_alt:,.0f} €</div>
-            <div class="card-sub">{round(preu_m2_alt)} €/m²</div>
+            <div class="card-sub">{round(total_alt/m2)} €/m²</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # Avís fallback
+    if fallback_actiu:
+        st.markdown("""
+        <div class="warning">
+            ⚠️ Combinació amb poques dades a la base de projectes —
+            estimació basada en el mínim real de projectes similars.
+        </div>
+        """, unsafe_allow_html=True)
 
     # Avís superfície fora de rang
     if m2 < m2_min or m2 > m2_max:
         st.markdown(f"""
         <div class="warning">
-            ⚠️ La superfície introduïda ({m2} m²) està fora del rang habitual dels projectes
-            de la base de dades ({m2_min}–{m2_max} m²). L'estimació pot ser menys precisa.
+            ⚠️ La superfície introduïda ({m2} m²) està fora del rang habitual
+            ({m2_min}–{m2_max} m²). L'estimació pot ser menys precisa.
         </div>
         """, unsafe_allow_html=True)
 
