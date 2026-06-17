@@ -203,7 +203,7 @@ st.markdown("""
     <div class="logo-container">
         <img src="assets/1.Milanta.jpg" alt="Milanta Logo">
     </div>
-    <h1>🌿 Simulador de Pressupost Orientatiu</h1>
+    <h1>Simulador de Pressupost Orientatiu</h1>
     <p>Renaturalització de patis escolars · milanta.net</p>
 </div>
 """, unsafe_allow_html=True)
