@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-import base64
 from pathlib import Path
 
 # ── CONFIGURACIÓ ─────────────────────────────────────────────────────────────
@@ -12,15 +11,7 @@ st.set_page_config(
 )
 
 # ── CARREGA LOGO ──────────────────────────────────────────────────────────────
-def get_logo_base64():
-    logo_path = Path("assets/1.Milanta.jpg")
-    if logo_path.exists():
-        with open(logo_path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    return None
-
-logo_base64 = get_logo_base64()
-logo_html = f'<img src="data:image/jpeg;base64,{logo_base64}" alt="Milanta Logo">' if logo_base64 else ""
+logo_path = Path("assets/1.Milanta.jpg")
 
 # ── CSS ──────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -211,11 +202,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── CAPÇALERA ─────────────────────────────────────────────────────────────────
-st.markdown(f"""
-<div class="header">
-    <div class="logo-container">
-        {logo_html}
-    </div>
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    if logo_path.exists():
+        st.image(str(logo_path), use_column_width=False, width=100)
+
+st.markdown("""
+<div class="header" style="padding-top: 0; margin-top: -2rem;">
     <h1>Simulador de Pressupost Orientatiu</h1>
     <p>Renaturalització de patis escolars · milanta.net</p>
 </div>
