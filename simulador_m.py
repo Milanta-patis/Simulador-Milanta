@@ -11,10 +11,10 @@ st.set_page_config(
 # ── CSS ──────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'DM Sans', sans-serif !important;
+        font-family: 'Poppins', sans-serif !important;
         background-color: #F7F4EF !important;
         color: #3A3228 !important;
     }
@@ -25,16 +25,29 @@ st.markdown("""
 
     .header {
         text-align: center;
-        padding: 2.5rem 0 2rem 0;
+        padding: 1.5rem 0 2rem 0;
         border-bottom: 1px solid #D6CFC4;
         margin-bottom: 2rem;
     }
+    .logo-container {
+        margin-bottom: 1rem;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .logo-container img {
+        max-height: 60px;
+        max-width: 80px;
+        object-fit: contain;
+    }
     .header h1 {
-        font-size: 1.5rem;
-        font-weight: 600;
+        font-size: 2.8rem;
+        font-weight: 700;
         color: #2D5A1B;
-        letter-spacing: -0.3px;
+        letter-spacing: -0.5px;
         margin-bottom: 0.4rem;
+        margin-top: 0;
     }
     .header p {
         font-size: 0.85rem;
@@ -85,7 +98,7 @@ st.markdown("""
         padding: 0.85rem 1rem !important;
         font-size: 0.95rem !important;
         font-weight: 500 !important;
-        font-family: 'DM Sans', sans-serif !important;
+        font-family: 'Poppins', sans-serif !important;
         margin-top: 1.5rem;
         transition: all 0.2s ease;
         letter-spacing: 0.1px;
@@ -201,6 +214,9 @@ st.markdown("""
 # ── CAPÇALERA ─────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="header">
+    <div class="logo-container">
+        <img src="assets/1.Milanta.jpg" alt="Milanta Logo">
+    </div>
     <h1>🌿 Simulador de Pressupost Orientatiu</h1>
     <p>Renaturalització de patis escolars · milanta.net</p>
 </div>
