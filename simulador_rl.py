@@ -356,11 +356,3 @@ if calcular:
             <span>Total estimació mitjana</span><span>{total:,.0f} €</span>
         </div>
         """, unsafe_allow_html=True)
-
-# ── FOOTER ────────────────────────────────────────────────────────────────────
-st.markdown("""
-<div class="footer">
-    Pressupost orientatiu basat en projectes reals ·
-    Com més projectes s'introdueixin a la base de dades, més fiable serà l'estimació
-</div>
-""", unsafe_allow_html=True)
