@@ -11,7 +11,8 @@ st.set_page_config(
 )
 
 # ── CARREGA LOGO ──────────────────────────────────────────────────────────────
-logo_path = Path("assets/1.Milanta.jpg")
+import os
+logo_path = "assets/1.Milanta.jpg"
 
 # ── CSS ──────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -202,10 +203,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── CAPÇALERA ─────────────────────────────────────────────────────────────────
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    if logo_path.exists():
-        st.image(str(logo_path), use_column_width=False, width=100)
+if os.path.exists(logo_path):
+    st.image(logo_path, width=120)
 
 st.markdown("""
 <div class="header" style="padding-top: 0; margin-top: -2rem;">

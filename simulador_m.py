@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-import base64
-from pathlib import Path
+import os
 
 # ── CONFIGURACIÓ ─────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -11,15 +10,7 @@ st.set_page_config(
 )
 
 # ── CARREGA LOGO ──────────────────────────────────────────────────────────────
-def get_logo_base64():
-    logo_path = Path("assets/1.Milanta.jpg")
-    if logo_path.exists():
-        with open(logo_path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    return None
-
-logo_base64 = get_logo_base64()
-logo_html = f'<img src="data:image/jpeg;base64,{logo_base64}" alt="Milanta Logo">' if logo_base64 else ""
+logo_path = "assets/1.Milanta.jpg"
 
 # ── CSS ──────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -225,11 +216,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── CAPÇALERA ─────────────────────────────────────────────────────────────────
-st.markdown(f"""
-<div class="header">
-    <div class="logo-container">
-        {logo_html}
-    </div>
+if os.path.exists(logo_path):
+    st.image(logo_path, width=120)
+
+st.markdown("""
+<div class="header" style="padding-top: 0.5rem;">
     <h1>Simulador de Pressupost Orientatiu</h1>
     <p>Renaturalització de patis escolars · milanta.net</p>
 </div>
